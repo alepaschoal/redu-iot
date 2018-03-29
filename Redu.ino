@@ -14,74 +14,59 @@
  * the License, or (at your option) any later version.
  */
 #include "Nextion.h"
+#include "NextionText.h"
 #include "SoftwareSerial.h"
 #define MENSAGEM_PERGUNTA '1'
 
-int estado = ESTADO_RECEBER_MENSAGEM;
 #define ESTADO_RECEBER_MENSAGEM 0
 #define ESTADO_LENDO_PERGUNTA 1
 #define ESTADO_PROCESSANDO_LCD 2
+int estado = ESTADO_RECEBER_MENSAGEM;
 
-SoftwareSerial minhaSoftwareSerial(2, 3);
+SoftwareSerial serialLCD(2, 3);
 
-//NexButton b0 = NexButton(0, 1, "b0");
-NexText t0 = NexText(0, 8, "t0");
-NexText g1 = NexText(0, 2, "g1");
-NexText g2 = NexText(0, 3, "g2");
-NexText g3 = NexText(0, 4, "g3");
-NexText g4 = NexText(0, 5, "g4");
-NexText g5 = NexText(0, 6, "g5");
+Nextion lcd(serialLCD);
 
-NexText* textos = {t0, g1, g2, g3, g4, g5};
+NextionText t0 = NextionText(lcd, 0, 8, "t0");
+NextionText g1 = NextionText(lcd, 0, 2, "g1");
+NextionText g2 = NextionText(lcd, 0, 3, "g2");
+NextionText g3 = NextionText(lcd, 0, 4, "g3");
+NextionText g4 = NextionText(lcd, 0, 5, "g4");
+NextionText g5 = NextionText(lcd, 0, 6, "g5");
+
+#define QUANT_ALTERNATIVAS 5
+NextionText alternativas[QUANT_ALTERNATIVAS] = {g1, g2, g3, g4, g5};
 
 char buffer[300] = {
   0};
 String texto = "teste 123";
 
-NexTouch *nex_listen_list[] = 
+void alternativaCb(NextionEventType type, INextionTouchable *btn)
 {
-  &t0,
-  &g1,
-  &g2,
-  &g3,
-  &g4,
-  &g5,
-  NULL
-};
-
-void b0PopCallback(void *ptr)
-{
-  uint16_t len;
-  uint16_t number;
-  String texto = "teste 123";
-
-  NexText *btn = (NexText *)ptr;
-
-  memset(buffer, 0, sizeof(buffer));
-  btn->getText(buffer, sizeof(buffer));
-
-  //
-  texto = atoi(buffer);
-  //number += 1;
-
-  memset(buffer, 0, sizeof(buffer));
-  //itoa(texto, buffer, 10);
-  //sprintf(buffer,"%d",number);
-
-  btn->setText(buffer);
+  if(type == NEX_EVENT_POP) {
+    Serial.print("Alternativa pressionada:");
+    Serial.println(btn->getComponentID());
+  }
 }
 
 void setup(void)
 {
   Serial.begin(9600);
-  nexInit();
-  t0.attachPop(b0PopCallback, &t0);
-  dbSerialPrintln("setup done");
+
+  serialLCD.begin(9600);
+  lcd.init();
+
+  // cadastrar o callback em todos os textos de alternativas
+  for(int i = 0; i < QUANT_ALTERNATIVAS; i++) {
+    alternativas[i].attachCallback(&alternativaCb);
+  } 
+  Serial.println("setup done");
 }
 
 int idxLeitura = 0;
 void loop(void)
 {
+  char c;
   switch(estado) {
   case ESTADO_RECEBER_MENSAGEM:
     if(Serial.available()) {
@@ -98,7 +83,7 @@ void loop(void)
     break;
   case ESTADO_LENDO_PERGUNTA:
     // '1Pergunta?;alt1;alt2;alt3;alt4;alt5;\n'
-    char c = Serial.read();
+    c = Serial.read();
     if(c != '\n') {
       buffer[idxLeitura++] = c;
     } else {
@@ -106,20 +91,34 @@ void loop(void)
     }
     break;
   case ESTADO_PROCESSANDO_LCD:
-    nexLoop(nex_listen_list);
+    lcd.poll();
     estado = ESTADO_RECEBER_MENSAGEM;
     break;
   }
 
 }
 void escreverPergunta() {
-  int idxTexto = 0;
-  int i = 0;
-  
+  int idxAlternativa = 0;
+
+  // strtok() é uma função para quebrar uma string em determinado delimitador
+  // a primeira chamada deve ter um ponteiro para a string a ser quebrada
+  // http://www.cplusplus.com/reference/cstring/strtok/
+  char *texto = strtok(buffer, ";");
+  if(texto == NULL) {
+    // nenhum delimitador encontrado, sair da função
+    return;
+  }
+
+  // primeiro campo é o texto da pergunta 
+  t0.setText(texto);
+
+  // pegar texto da 1a alternativa
+  // depois da primeira chamada, strtok deve ser chamada com NULL para 'continuar procurando'
+  texto = strtok(NULL, ";");
+  while (texto != NULL && idxAlternativa < QUANT_ALTERNATIVAS) {
+    // chamamos setText() para cada NextionText em nossa array
+    alternativas[idxAlternativa].setText(texto);
+    idxAlternativa++;
+    texto = strtok(NULL, ";");
+  }
 }
-
-
-
-
-
-
