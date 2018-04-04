@@ -1,0 +1,28 @@
+{
+  "name": "projetohackaton",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "johnny-five": "^0.14.1",
+    "lcd-scrolling": "^1.0.2",
+    "lodash": "^4.17.5",
+    "parser-readline": "^1.0.2",
+    "request": "^2.83.0",
+    "serialport": "^6.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WagnerNKI/projetoHackaton.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WagnerNKI/projetoHackaton/issues"
+  },
+  "homepage": "https://github.com/WagnerNKI/projetoHackaton#readme"
+}
