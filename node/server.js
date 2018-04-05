@@ -16,6 +16,13 @@ var portaAberta = false;
 var pontuacao = 0;
 
 parser.on('data', function (dadosLidos) {
+    console.log(dadosLidos)
+    if (/^reset/.test(dadosLidos.toLocaleLowerCase())) {
+        perguntas = null;
+        perguntaAtual = 0;
+        pontuacao = 0;
+        mensagem2 = null;
+    }
     if (/^alternativa/.test(dadosLidos.toLocaleLowerCase())) {
         console.log(dadosLidos[12]);
         // var letra = dadosLidos.substr(dadosLidos.length - 1, 1);
@@ -26,7 +33,8 @@ parser.on('data', function (dadosLidos) {
         }
         // guardar pontuação
     }
-    if (/^ready/.test(dadosLidos) || /^alternativa/.test(dadosLidos.toLocaleLowerCase())) {
+    if (/ready/.test(dadosLidos) || /^alternativa/.test(dadosLidos.toLocaleLowerCase())) {
+        //console.log(dadosLidos);
         pegarPergunta();
     }
 });
@@ -61,7 +69,23 @@ function pegarPergunta() {
             gravaPerguntaArduino(formatarPergunta(perguntas[perguntaAtual++]));
             console.log("respostaCerta " + respostaCerta);
         } else {
-            // cabô!
+            var mensagem2 = ["2" + pontuacao];
+            console.log(mensagem2)
+            var mensagemPontuacao = mensagem2 + "\n";
+            if (portaAberta) {
+                //console.log("pontuacao " + mensagemPontuacao);
+                serialPort.write(mensagemPontuacao);
+                //console.log("pontuacao enviada");
+            } else {
+                port.open(function (err) {
+                    if (err) {
+                        return console.log('Error opening port: ', err.message);
+                    }
+                    //console.log("pontuacao " + mensagemPontuacao);
+                    serialPort.write(mensagemPontuacao);
+                    //console.log("pontuacao enviada");
+                });
+            }
         }
     }
     console.log("perguntaAtual depois: " + perguntaAtual);
