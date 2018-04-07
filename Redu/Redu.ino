@@ -107,6 +107,11 @@ void lerResposta() {
       Serial.println("ready");
       estado = ESTADO_RECEBER_MENSAGEM;
     }
+    if (message == "65 1 1 0 ffff ffff ffff") {
+      Serial.println("reset");
+      Serial.flush();
+      resetFunc();
+    }
     if (message == "65 1 3 0 ffff ffff ffff") {
       Serial.println("Alternativa A");
     }
